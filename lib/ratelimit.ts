@@ -6,10 +6,12 @@ export function rateLimit(key: string, limit: number, windowMs = 60_000): boolea
   const now = Date.now();
   const b = buckets.get(key);
   if (!b || b.reset < now) {
-    buckets.set(key, { n: 1, reset: now + windowMs });
-    if (buckets.size > 5000) {
+    if (buckets.size >= 5000) {
       for (const [k, v] of buckets) if (v.reset < now) buckets.delete(k);
+      // Do not evict live buckets: doing so would let flooding reset another IP's budget.
+      if (!buckets.has(key) && buckets.size >= 5000) return false;
     }
+    buckets.set(key, { n: 1, reset: now + windowMs });
     return true;
   }
   b.n++;

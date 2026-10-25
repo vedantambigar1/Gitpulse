@@ -1,4 +1,7 @@
+import crypto from "node:crypto";
 import { LIMITS } from "./config";
+import { USERNAME_RE } from "./github";
+import { appSecret, safeEqual } from "./secret";
 import { createLicense, findLicenseBySession, getLicense, updateLicense } from "./store";
 import type { License, Plan } from "./types";
 
@@ -17,6 +20,7 @@ export interface VerifyResult {
  */
 export function verifyKey(key: string, username: string, opts: { bind?: boolean } = {}): VerifyResult {
   const { bind = true } = opts;
+  if (!USERNAME_RE.test(username)) return { valid: false, reason: "unknown" };
   if (!KEY_RE.test(key)) return { valid: false, reason: "unknown" };
   const license = getLicense(key);
   if (!license) return { valid: false, reason: "unknown" };
@@ -30,10 +34,19 @@ export function verifyKey(key: string, username: string, opts: { bind?: boolean 
   return { valid: true, license: updated };
 }
 
+/** Private dashboard credential. Never include this in a widget or public API response. */
+export function managementKey(key: string): string {
+  const signature = crypto.createHmac("sha256", appSecret()).update(`management:${key}`).digest("hex");
+  return `gpm_${key.slice(3)}_${signature}`;
+}
+
 export function authLicense(req: Request): License | undefined {
   const header = req.headers.get("authorization") ?? "";
-  const key = header.replace(/^Bearer\s+/i, "").trim();
-  if (!KEY_RE.test(key)) return undefined;
+  const token = header.replace(/^Bearer\s+/i, "").trim();
+  const match = /^gpm_([a-f0-9]{24})_[a-f0-9]{64}$/.exec(token);
+  if (!match) return undefined;
+  const key = `gp_${match[1]}`;
+  if (!safeEqual(token, managementKey(key))) return undefined;
   const license = getLicense(key);
   return license && license.status === "active" ? license : undefined;
 }

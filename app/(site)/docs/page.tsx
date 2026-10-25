@@ -68,11 +68,11 @@ export default function Docs() {
 
         <h2>Analytics (Pro)</h2>
         <p>
-          Every widget view is counted with a salted hash that rotates daily. No cookies are set and no personal data is stored. Open the dashboard with your key to
+          Every widget view is counted with a salted hash that rotates daily. No cookies are set and no personal data is stored. Open the dashboard with your private dashboard key to
           see views, unique visitors and referring sites. The same data is available from the API:
         </p>
         <pre className="code"><code>{`curl ${SITE.url}/api/analytics?days=30 \\
-  -H "Authorization: Bearer gp_your_key"`}</code></pre>
+  -H "Authorization: Bearer gpm_your_private_dashboard_key"`}</code></pre>
 
         <h2>Custom domains (Pro)</h2>
         <p>

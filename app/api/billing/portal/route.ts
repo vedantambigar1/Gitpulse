@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   if (!rateLimit(`portal:${clientIp(req)}`, 10)) return Response.json({ error: "Too many requests" }, { status: 429 });
   const license = authLicense(req);
-  if (!license) return Response.json({ error: "A valid, active Pro license key is required" }, { status: 401 });
+  if (!license) return Response.json({ error: "A valid private dashboard key for an active Pro license is required" }, { status: 401 });
 
   const s = stripe();
   if (!s) return Response.json({ error: "Billing is not configured" }, { status: 503 });

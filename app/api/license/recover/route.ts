@@ -1,3 +1,4 @@
+import { managementKey } from "@/lib/license";
 import { SITE } from "@/lib/config";
 import { emailConfigured, sendEmail } from "@/lib/email";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
@@ -17,6 +18,7 @@ export async function POST(req: Request) {
   let body: { email?: unknown };
   try {
     body = await req.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Invalid request");
   } catch {
     return Response.json({ error: "Invalid request" }, { status: 400 });
   }
@@ -39,7 +41,12 @@ export async function POST(req: Request) {
         text: [
           `Here ${licenses.length === 1 ? "is your" : "are your"} ${SITE.name} Pro license key${licenses.length === 1 ? "" : "s"}:`,
           "",
-          ...licenses.map((l) => `${l.key}  (${l.plan})`),
+          ...licenses.flatMap((l) => [
+            `Widget license key: ${l.key}  (${l.plan})`,
+            `Private dashboard key: ${managementKey(l.key)}`,
+            "Keep the dashboard key private; never put it in an embed.",
+            "",
+          ]),
           "",
           `Open your dashboard: ${SITE.url}/dashboard`,
           "",

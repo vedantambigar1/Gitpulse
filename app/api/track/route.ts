@@ -16,6 +16,7 @@ export async function POST(req: Request) {
   let body: { u?: unknown; ref?: unknown };
   try {
     body = await req.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Invalid request");
   } catch {
     return new Response(null, { status: 400 });
   }

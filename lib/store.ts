@@ -108,7 +108,7 @@ export function findDomain(host: string): { license: License; mapping: DomainMap
 
 export function recordView(username: string, visitor: string, referrer: string) {
   const u = username.toLowerCase();
-  const stats = (db().stats[u] ??= {});
+  const stats = Object.hasOwn(db().stats, u) ? db().stats[u] : (db().stats[u] = {});
   const day = today();
   let s = stats[day];
   if (!s) {
@@ -119,8 +119,9 @@ export function recordView(username: string, visitor: string, referrer: string) 
   }
   s.views++;
   if (s.visitors.length < 3000 && !s.visitors.includes(visitor)) s.visitors.push(visitor);
-  const ref = Object.keys(s.referrers).length >= 50 && !(referrer in s.referrers) ? "other" : referrer;
-  s.referrers[ref] = (s.referrers[ref] ?? 0) + 1;
+  const ref = Object.keys(s.referrers).length >= 50 && !Object.hasOwn(s.referrers, referrer) ? "other" : referrer;
+  const count = Object.hasOwn(s.referrers, ref) ? s.referrers[ref] : 0;
+  Object.defineProperty(s.referrers, ref, { value: count + 1, writable: true, enumerable: true, configurable: true });
   persist();
 }
 
@@ -133,7 +134,7 @@ export interface UsernameStats {
 
 export function getStats(username: string, days: number): UsernameStats {
   const u = username.toLowerCase();
-  const stats = db().stats[u] ?? {};
+  const stats = Object.hasOwn(db().stats, u) ? db().stats[u] : {};
   const out: UsernameStats["days"] = [];
   const refs = new Map<string, number>();
   const unique = new Set<string>();

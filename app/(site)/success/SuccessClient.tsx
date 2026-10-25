@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 export default function SuccessClient({ sessionId, demo }: { sessionId: string; demo: boolean }) {
   const [key, setKey] = useState("");
+  const [dashboardKey, setDashboardKey] = useState("");
   const [failed, setFailed] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -19,8 +20,10 @@ export default function SuccessClient({ sessionId, demo }: { sessionId: string; 
           const json = await res.json();
           if (!stop) {
             setKey(json.key);
+            setDashboardKey(json.managementKey);
             try {
               localStorage.setItem("gp_key", json.key);
+              localStorage.setItem("gp_management_key", json.managementKey);
             } catch {
               /* ignore */
             }
@@ -65,6 +68,8 @@ export default function SuccessClient({ sessionId, demo }: { sessionId: string; 
         <code>{key}</code>
         <button className="btn btn-sm" onClick={copy}>{copied ? "Copied" : "Copy"}</button>
       </div>
+      <p className="hint">Private dashboard key. Save it securely; never put it in your widget snippet.</p>
+      <div className="key-box"><code style={{ overflowWrap: "anywhere" }}>{dashboardKey}</code></div>
       <div className="where" style={{ margin: 0 }}>
         <ul className="where">
           <li>

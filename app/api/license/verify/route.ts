@@ -9,6 +9,7 @@ export async function POST(req: Request) {
   let body: { key?: unknown; username?: unknown };
   try {
     body = await req.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Invalid request");
   } catch {
     return Response.json({ valid: false, reason: "unknown" }, { status: 400 });
   }
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
   const username = typeof body.username === "string" && USERNAME_RE.test(body.username) ? body.username : "";
   if (!key) return Response.json({ valid: false, reason: "unknown" });
 
-  const r = verifyKey(key, username || "-", { bind: false });
+  const r = verifyKey(key, username || "a", { bind: false });
   return Response.json({
     valid: r.valid,
     reason: r.reason,

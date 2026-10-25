@@ -1,8 +1,7 @@
-import { fulfillCheckout } from "@/lib/license";
-import { sessionIsPaid, stripe } from "@/lib/stripe";
+import { fulfillCheckout, managementKey } from "@/lib/license";
+import { checkoutPlan, sessionIsPaid, stripe } from "@/lib/stripe";
 import { findLicenseBySession } from "@/lib/store";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
-import type { Plan } from "@/lib/types";
 
 /**
  * The success page polls this with the Checkout session id to reveal the license key.
@@ -14,22 +13,27 @@ export async function GET(req: Request) {
   const sessionId = new URL(req.url).searchParams.get("session_id") ?? "";
   if (!/^[A-Za-z0-9_]{8,200}$/.test(sessionId)) return Response.json({ error: "Invalid session" }, { status: 400 });
 
+  const reply = (license: NonNullable<ReturnType<typeof findLicenseBySession>>) => Response.json(
+    { key: license.key, managementKey: managementKey(license.key), plan: license.plan, email: license.email },
+    { headers: { "Cache-Control": "private, no-store" } }
+  );
   const existing = findLicenseBySession(sessionId);
-  if (existing) return Response.json({ key: existing.key, plan: existing.plan, email: existing.email });
+  if (existing) return reply(existing);
 
   const s = stripe();
   if (s && sessionId.startsWith("cs_")) {
     try {
       const session = await s.checkout.sessions.retrieve(sessionId);
-      if (sessionIsPaid(session)) {
+      const plan = checkoutPlan(session);
+      if (plan && sessionIsPaid(session)) {
         const license = fulfillCheckout({
           sessionId,
           email: session.customer_details?.email ?? session.customer_email ?? "unknown",
-          plan: (session.metadata?.plan as Plan) ?? "monthly",
+          plan,
           stripeCustomerId: typeof session.customer === "string" ? session.customer : undefined,
           stripeSubscriptionId: typeof session.subscription === "string" ? session.subscription : undefined,
         });
-        return Response.json({ key: license.key, plan: license.plan, email: license.email });
+        return reply(license);
       }
     } catch {
       /* fall through to pending */

@@ -80,7 +80,7 @@ export default function DashboardClient() {
       setData(json);
       setKey(k);
       try {
-        localStorage.setItem("gp_key", k);
+        localStorage.setItem("gp_management_key", k);
       } catch {
         /* ignore */
       }
@@ -94,7 +94,7 @@ export default function DashboardClient() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("gp_key");
+      const saved = localStorage.getItem("gp_management_key");
       if (saved) {
         setInput(saved);
         load(saved);
@@ -168,10 +168,10 @@ export default function DashboardClient() {
           }}
         >
           <div className="field">
-            <label htmlFor="dash-key">License key</label>
-            <input id="dash-key" className="input mono" placeholder="gp_..." value={input} onChange={(e) => setInput(e.target.value)} autoComplete="off" spellCheck={false} />
+            <label htmlFor="dash-key">Private dashboard key</label>
+            <input id="dash-key" className="input mono" placeholder="gpm_..." value={input} onChange={(e) => setInput(e.target.value)} autoComplete="off" spellCheck={false} />
             <p className="hint">
-              You received it after checkout. No key yet? <Link href="/#pricing">See Pro</Link>.
+              You received it after checkout. Keep it private and out of embeds. Existing customers can recover it by email below. No key yet? <Link href="/#pricing">See Pro</Link>.
             </p>
           </div>
           <button className="btn btn-signal" disabled={loading || !input.trim()}>

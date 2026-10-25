@@ -16,8 +16,12 @@ export async function POST(req: Request) {
   let body: { plan?: unknown; email?: unknown };
   try {
     body = await req.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Invalid request");
   } catch {
     return Response.json({ error: "Invalid request" }, { status: 400 });
+  }
+  if (body.plan !== "monthly" && body.plan !== "lifetime") {
+    return Response.json({ error: "Unknown plan" }, { status: 400 });
   }
   const planId = body.plan as PlanId;
   const plan = PLANS[planId];

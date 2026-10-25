@@ -75,7 +75,7 @@ A license is only issued once Stripe reports the payment as collected, never for
 
 ### Lost keys
 
-Set `RESEND_API_KEY` and `EMAIL_FROM` (a verified sender in Resend). The dashboard's "Lost your key?" form then emails active keys to the address used at checkout. The response never reveals whether an address has a license, and requests are rate limited.
+Set `RESEND_API_KEY` and `EMAIL_FROM` (a verified sender in Resend). The dashboard's "Lost your key?" form then emails active keys to the address used at checkout. The response never reveals whether an address has a license, and requests are rate limited. Checkout and recovery provide a separate private dashboard key (`gpm_...`) for analytics, domain management and billing. Never embed that key; only the widget license key (`gp_...`) belongs in public snippets. Existing customers can retrieve their dashboard key through email recovery or their original checkout success link. Changing APP_SECRET invalidates dashboard keys, which can then be recovered again.
 
 The success page also confirms the payment directly with Stripe, so a customer gets their key even if the webhook is a few seconds late. Cancelled or failed subscriptions flip the license to `canceled`, and every widget using that key silently falls back to the free look.
 
@@ -101,7 +101,7 @@ A license key appears in the customer's page source, so each key works for at mo
 - Streaks are computed from GitHub's 12-month contribution calendar, so they cap at about 365 days.
 - Private contributions only count if the user enabled "Include private contributions" on their GitHub profile.
 - TLS certificates for customer domains are not automated. Add each verified domain at your host (Vercel Domains API) or put the app behind Caddy with on-demand TLS.
-- There are no automated tests yet; CI runs typecheck and build.
+- Security regression tests run with `npm test`; CI also runs typecheck and build.
 - Analytics keep up to 3,000 unique visitor hashes per username per day, which is plenty for personal sites.
 
 ## Scripts

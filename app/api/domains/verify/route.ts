@@ -9,11 +9,12 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   if (!rateLimit(`domain-verify:${clientIp(req)}`, 20)) return Response.json({ error: "Too many requests" }, { status: 429 });
   const license = authLicense(req);
-  if (!license) return Response.json({ error: "A valid, active Pro license key is required" }, { status: 401 });
+  if (!license) return Response.json({ error: "A valid private dashboard key for an active Pro license is required" }, { status: 401 });
 
   let body: { host?: unknown };
   try {
     body = await req.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Invalid request");
   } catch {
     return Response.json({ error: "Invalid request" }, { status: 400 });
   }
@@ -39,6 +40,14 @@ export async function POST(req: Request) {
     );
   }
 
+  // DNS is asynchronous: another account may have verified this host while we waited.
+  const currentOwner = findDomain(host);
+  if (currentOwner && currentOwner.license.key !== license.key) {
+    return Response.json({ error: "That domain is already connected to another account" }, { status: 409 });
+  }
+  if (!license.domains.includes(mapping) || license.status !== "active") {
+    return Response.json({ error: "The domain or license changed; try again" }, { status: 409 });
+  }
   updateLicense(license.key, { domains: license.domains.map((d) => (d.host === host ? { ...d, verified: true } : d)) });
   return Response.json({ ok: true, verified: true });
 }

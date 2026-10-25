@@ -2,10 +2,10 @@ import { verifyRecordName, verifyRecordValue } from "@/lib/domains";
 import { authLicense } from "@/lib/license";
 import { getStats } from "@/lib/store";
 
-/** Pro: view and visitor stats for every username on the license. Auth via `Authorization: Bearer gp_...`. */
+/** Pro: view and visitor stats for every username on the license. Auth via the private `Authorization: Bearer gpm_...` credential. */
 export async function GET(req: Request) {
   const license = authLicense(req);
-  if (!license) return Response.json({ error: "A valid, active Pro license key is required" }, { status: 401 });
+  if (!license) return Response.json({ error: "A valid private dashboard key for an active Pro license is required" }, { status: 401 });
 
   const days = Math.min(90, Math.max(7, Number(new URL(req.url).searchParams.get("days")) || 30));
   return Response.json(

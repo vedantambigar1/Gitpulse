@@ -23,11 +23,12 @@ function appHosts(): string[] {
  */
 export async function POST(req: Request) {
   const license = authLicense(req);
-  if (!license) return Response.json({ error: "A valid, active Pro license key is required" }, { status: 401 });
+  if (!license) return Response.json({ error: "A valid private dashboard key for an active Pro license is required" }, { status: 401 });
 
   let body: { host?: unknown; username?: unknown; query?: unknown };
   try {
     body = await req.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Invalid request");
   } catch {
     return Response.json({ error: "Invalid request" }, { status: 400 });
   }
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   const license = authLicense(req);
-  if (!license) return Response.json({ error: "A valid, active Pro license key is required" }, { status: 401 });
+  if (!license) return Response.json({ error: "A valid private dashboard key for an active Pro license is required" }, { status: 401 });
   const host = new URL(req.url).searchParams.get("host")?.toLowerCase() ?? "";
   updateLicense(license.key, { domains: license.domains.filter((d) => d.host !== host) });
   return Response.json({ ok: true });

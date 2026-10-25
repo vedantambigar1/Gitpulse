@@ -1,8 +1,7 @@
 import type Stripe from "stripe";
 import { fulfillCheckout } from "@/lib/license";
-import { sessionIsPaid, stripe } from "@/lib/stripe";
+import { checkoutPlan, sessionIsPaid, stripe } from "@/lib/stripe";
 import { findLicenseBySubscription, updateLicense } from "@/lib/store";
-import type { Plan } from "@/lib/types";
 
 export const runtime = "nodejs";
 
@@ -26,11 +25,12 @@ export async function POST(req: Request) {
     case "checkout.session.completed":
     case "checkout.session.async_payment_succeeded": {
       const session = event.data.object as Stripe.Checkout.Session;
-      if (sessionIsPaid(session)) {
+      const plan = checkoutPlan(session);
+      if (plan && sessionIsPaid(session)) {
         fulfillCheckout({
           sessionId: session.id,
           email: session.customer_details?.email ?? session.customer_email ?? "unknown",
-          plan: (session.metadata?.plan as Plan) ?? "monthly",
+          plan,
           stripeCustomerId: typeof session.customer === "string" ? session.customer : undefined,
           stripeSubscriptionId: typeof session.subscription === "string" ? session.subscription : undefined,
         });
